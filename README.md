@@ -34,8 +34,8 @@ if __name__ == "__main__":
 	dataset = ex.generate_dataset(DATA_PATH)
 	plain_dataset = [(X, y) for y in dataset for X in dataset[y]]
 	X, y = zip(*plain_dataset)
-    
-    # This creates the classifier as well as dumping it with pickle
+
+	# This creates the classifier as well as dumping it with pickle
 	clf = tr.create_classifier(classifier, X, y)
 ```
 
