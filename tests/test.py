@@ -104,7 +104,7 @@ def test_audio(clf, test, name, dolog):
 
 def test_learning(classifier_path, data_path, dolog):
 	clf = load_clf(classifier_path)
-	music = voice = music_p = voice_p = total_time = 0
+	music = voice = music_p = voice_p = total_time = error = m_error = v_error = 0
 	try:
 		for audio in listdir(data_path):
 			directory = "%s/%s" % (data_path, audio)
@@ -118,29 +118,56 @@ def test_learning(classifier_path, data_path, dolog):
 				res = test_audio(clf, embeddings, file, dolog)
 				elapsed = ut.toc()
 				total_time += elapsed
-				if(res == "music"):
-					music_p += 1
-				else:
-					voice_p += 1
 				if(type_aud == "music"):
 					music += 1
+					if(res == "voice"):
+						voice_p += 1
+						error += 1
+						m_error += 1
+					else:
+						music_p += 1
 				else:
 					voice += 1
+					if(res == "music"):
+						error += 1
+						music_p += 1
+						v_error += 1
+					else:
+						voice_p += 1
 		total = music + voice
-		accuracy = round(((total - abs(music - music_p)) * 100) / total, 2)
-		v_accuracy = (voice - abs(voice - voice_p)) * 100 / voice
-		m_accuracy = (music - abs(music - music_p)) * 100 / music
+		accuracy = round(100 - (error / total * 100), 2)
+		P_v = (voice - v_error) / voice_p
+		R_v = (voice - v_error) / voice
+		F1_v = round((2 * P_v * R_v) / (P_v + R_v), 4)
+		P_m = (music - m_error) / music_p
+		R_m = (music - m_error) / music
+		F1_m = round((2 * P_m * R_m) / (P_m + R_m), 4)
+		v_accuracy = round(100 - (v_error / voice * 100), 2)
+		m_accuracy = round(100 - (m_error / music * 100), 2)
 		print("\nRESULTS \n")
 		print("\t" + str(music) + " audios are MUSIC")
 		print("\t" + str(voice) + " audios are VOICE\n")
 		print("\t" + str(music_p) + " audios predicted as MUSIC")
 		print("\t" + str(voice_p) + " audios predicted as VOICE\n")
 		print("AVERAGE PROCESSING TIME PER AUDIO -> %s seconds\n" % str(round(total_time / (music + voice), 2)))
+		print("ERRORS -> " + str(error))
+		print("ERRORS IN MUSIC -> " + str(m_error))
+		print("ERRORS IN VOICE -> " + str(v_error))
+		print("MUSIC F1 -> " + str(F1_m))
+		print("VOICE F1 -> " + str(F1_v))
 		print("MUSIC ACCURACY -> " + str(m_accuracy) + "%")
 		print("VOICE ACCURACY -> " + str(v_accuracy) + "%")
 		print("TOTAL ACCURACY -> " + str(accuracy) + "%\n")
 	except Exception as e:
 		print(e)
+
+
+def test_output(classifier_path, path):
+	clf = load_clf(classifier_path)
+	embeddings = rescue(path, ex.generate_embeddings, (path,))
+	predicted = clf.predict_proba(embeddings)
+	for y in predicted:
+		print(y)
 
 
 def test_1(classifiers, path):
